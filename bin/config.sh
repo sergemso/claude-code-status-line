@@ -12,7 +12,7 @@ usage() {
 Usage: config.sh <command>
   show                          current settings (value, and where it comes from)
   model [NAME|list]             base model for the price multiplier (x1.0); no NAME = show
-  sections                      show which sections are enabled
+  sections [list]               enabled/hidden sections and the valid names
   sections show|hide NAME...    enable/disable sections
   sections only NAME...         enable just these
   sections all                  enable all
@@ -63,15 +63,19 @@ is_int() { case $1 in ''|*[!0-9]*) return 1 ;; esac; }
 
 current_sections() { local v; v=$(get SECTIONS); echo "${v:-$(IFS=,; echo "${ALL_SECTIONS[*]}")}"; }
 
-# canonical-order SECTIONS value from a space-separated set of names
+# canonical-order SECTIONS value from a space-separated set of names; prints what changed
 save_sections() {
-  local out="" s n
+  local out="" s n before after hidden=""
+  before=$(current_sections)
   for s in "${ALL_SECTIONS[@]}"; do
     for n in "$@"; do [ "$n" = "$s" ] && { out="${out:+$out,}$s"; break; }; done
   done
   [ -n "$out" ] || die "at least one section must stay enabled"
   put SECTIONS "$out"
-  echo "sections: $out"
+  for s in "${ALL_SECTIONS[@]}"; do case ",$out," in *",$s,"*) ;; *) hidden="$hidden $s" ;; esac; done
+  if [ "$before" = "$out" ]; then echo "no change (already: $out)"; else echo "sections updated"; fi
+  echo "enabled: ${out//,/ }"
+  echo "hidden: ${hidden:- (none)}"
 }
 
 cmd_show() {
@@ -106,21 +110,35 @@ cmd_model() {
   esac
 }
 
+# sections_status -> enabled/hidden lists plus the valid names and usage
+sections_status() {
+  local cur=() s hidden=""
+  IFS=, read -r -a cur <<< "$(current_sections)"
+  for s in "${ALL_SECTIONS[@]}"; do case " ${cur[*]} " in *" $s "*) ;; *) hidden="$hidden $s" ;; esac; done
+  echo "enabled: ${cur[*]}"
+  echo "hidden: ${hidden:- (none)}"
+  echo "names:   ${ALL_SECTIONS[*]}   (stats = cache hit rate, shown inside cache)"
+  echo "change:  sections show|hide|only NAME...   or   sections all"
+}
+
 cmd_sections() {
   local sub=$1; [ $# -gt 0 ] && shift
   local cur=() names=() s n
   IFS=, read -r -a cur <<< "$(current_sections)"
   for n in "$@"; do valid_section "$n" || die "unknown section '$n' (one of: ${ALL_SECTIONS[*]})"; done
   case $sub in
-    '') echo "enabled: ${cur[*]}"
-        echo "hidden:  $(for s in "${ALL_SECTIONS[@]}"; do case " ${cur[*]} " in *" $s "*) ;; *) printf '%s ' "$s" ;; esac; done)" ;;
-    show) [ $# -gt 0 ] || die "name at least one section"; save_sections "${cur[@]}" "$@" ;;
-    hide) [ $# -gt 0 ] || die "name at least one section"
-          for s in "${cur[@]}"; do case " $* " in *" $s "*) ;; *) names+=("$s") ;; esac; done
-          save_sections "${names[@]}" ;;
-    only) [ $# -gt 0 ] || die "name at least one section"; save_sections "$@" ;;
+    ''|list|status) sections_status ;;
+    show|hide|only)
+      # no names given: just show the state and how to change it
+      [ $# -gt 0 ] || { sections_status; return; }
+      case $sub in
+        show) save_sections "${cur[@]}" "$@" ;;
+        only) save_sections "$@" ;;
+        hide) for s in "${cur[@]}"; do case " $* " in *" $s "*) ;; *) names+=("$s") ;; esac; done
+              save_sections "${names[@]}" ;;
+      esac ;;
     all)  drop SECTIONS; echo "sections: all enabled" ;;
-    *)    die "sections: expected show|hide|only|all, got '$sub'" ;;
+    *)    die "sections: expected show|hide|only NAME..., all or list, got '$sub'" ;;
   esac
 }
 
@@ -131,6 +149,7 @@ cmd_resets() {
     *[!A-Za-z0-9_,-]*) die "resets: use a comma list of window names, e.g. 5h,7d,spend" ;;
   esac
   put RESETS "$1"; echo "resets: $1"
+  echo "only the windows named here are shown (default: 5h,7d,spend; spend exists only on gateway accounts). Undo: reset RESETS"
 }
 
 cmd_thresholds() {

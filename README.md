@@ -1,6 +1,8 @@
 # claude-code-status-line
 
-A [Claude Code](https://claude.com/claude-code) status line, packaged as a plugin: model and price multiplier, context usage, prompt-cache timer and hit rate, and rate-limit resets, all on one line: about 90 columns with the default windows, 115 with an extra window like `opus` as in the example below.
+A [Claude Code](https://claude.com/claude-code) status line, packaged as a plugin. One line with the model and its price multiplier, context usage, prompt-cache time left and hit rate, and rate-limit resets. About 90 columns with the default windows; it shrinks itself on narrow terminals.
+
+[What you see](#what-you-see) · [Install](#install) · [Settings](#settings) · [Narrow terminals](#narrow-terminals) · [Troubleshooting](#troubleshooting)
 
 ## What you see
 
@@ -17,15 +19,16 @@ Sonnet 5.5 (x1.0) | ██░░░ 42% (200k) | cache 24m 58s 90% | 12% 4h 59m 
 
 | # | Section | Shows | Colors |
 |---|---|---|---|
-| 1 | **Model** | Active model. `(x1.0)` is its input price relative to your base model (default Sonnet 5.5; `config.sh model` changes it). Fast mode is priced in. | cyan |
+| 1 | **Model** | Active model. `(x1.0)` is its input price relative to your base model (default Sonnet 5.5; change it with `/statusline-model`). Fast mode is priced in. | cyan |
 | 2 | **Context** | Fill bar of 5 cells with 4 shades (`░▒▓█`, 15 steps), percent used, window size. | 🟩 < 50% · 🟨 ≥ 50% · 🟥 ≥ 80% |
 | 3 | **Prompt cache** | Time until the cache expires, then its hit rate. `no cache` when it has expired. | time: 🟩 · 🟨 < 20 min · 🟥 < 5 min<br>hit rate: 🟩 ≥ 80% · 🟥 < 80% |
 | 4 | **5-hour window** | `<used %> <time to reset> / <window length>` | 🟩 < 50% · 🟨 ≥ 50% · 🟥 ≥ 80% |
 | 5 | **7-day window** | Same format. A gateway spend limit looks the same, e.g. `81% 21d 23h / 30d`. | as above |
-| 6 | **Extra windows** | Optional (`config.sh resets all`): any other window the API sends, with a dim name. | as above |
+| 6 | **Extra windows** | Optional (`/statusline-resets all`): any other window the API sends (for example a per-model weekly limit), shown with a dim name. | as above |
 
 - Durations show their two most significant units (`6d 23h`, `24m 58s`, `59s`).
 - Sections are separated by a dim `|`, and a section with no data disappears.
+- A **custom reset** is a countdown you define yourself (`STATUSLINE_CUSTOM_RESET`, see [Environment overrides](#environment-overrides)).
 - Everything above is configurable: [Settings](#settings).
 
 ## Install
@@ -38,23 +41,11 @@ Sonnet 5.5 (x1.0) | ██░░░ 42% (200k) | cache 24m 58s 90% | 12% 4h 59m 
 
 `/statusline:setup [--interval SECONDS] [--force]` points `statusLine` in `~/.claude/settings.json` at `~/.claude/statusline/statusline.sh` (refresh every 15 s unless `--interval` says otherwise; refuses to replace an existing different one unless you pass `--force`). A SessionStart hook keeps that copy in sync with the installed plugin version, so updates need no re-run.
 
-Requires `bash`, `jq`, `curl` and `awk` (Linux and macOS; Windows is not supported).
+Requires `bash`, `jq`, `curl` and `awk` (Linux and macOS; Windows is not supported). The `/statusline-*` commands need a Claude Code version that supports plugin modules; the rest works without them.
 
-## Narrow terminals
+**Update:** `/plugin marketplace update claude-code-status-line`, then `/reload-plugins`. The script copy in `~/.claude/statusline/` is refreshed at the next session start.
 
-On every refresh the script reads the terminal width (`stty size </dev/tty`) and, if the line is too wide, drops one thing at a time until it fits. There is no resize notification, so the line adapts at the next refresh: after `refreshInterval` seconds, or sooner when Claude Code re-runs it for an event. A smaller interval (`/statusline:setup --interval 5`) reacts faster.
-
-| Level | Dropped, cumulatively | Example (default windows) |
-|---|---|---|
-| 0 | nothing | `Sonnet 5.5 (x1.0) \| ██░░░ 42% (200k) \| cache 24m 58s 90% \| 12% 4h 59m / 5h \| 55% 6d 23h / 7d` |
-| 1 | context window size, named extra windows, custom reset | `Sonnet 5.5 (x1.0) \| ██░░░ 42% \| cache 24m 58s 90% \| 12% 4h 59m / 5h \| 55% 6d 23h / 7d` |
-| 2 | cache hit rate | `… \| cache 24m 57s \| 12% 4h 59m / 5h \| …` |
-| 3 | `/ total` on windows | `… \| cache 24m 57s \| 12% 4h 59m \| 55% 6d 22h` |
-| 4 | price multiplier, windows after the first | `Sonnet 5.5 \| ██░░░ 42% \| cache 24m 56s \| 12% 4h 59m` |
-| 5 | cache | `Sonnet 5.5 \| ██░░░ 42% \| 12% 4h 59m` |
-| 6 | reset windows | `Sonnet 5.5 \| ██░░░ 42%` |
-
-If the width can't be read (no tty), nothing is dropped; set it by hand with `config.sh width 100`. If `/dev/tty` isn't available to the script it uses the tty of the nearest parent process that has one. To see what it detected, run `config.sh dump /tmp/sl.txt` (or set `STATUSLINE_DUMP`): each run writes the raw JSON there, then a line `cols=… margin=… level=… visible=…`; `config.sh dump off` stops it.
+**Uninstall:** remove the plugin in `/plugin`, delete the `statusLine` entry from `~/.claude/settings.json`, and delete `~/.claude/statusline/`.
 
 ## Settings
 
@@ -101,3 +92,31 @@ An env var `STATUSLINE_<KEY>` (e.g. `STATUSLINE_RESETS`, `STATUSLINE_CONTEXT_WAR
 | `CLAUDE_CONFIG_DIR` | Config directory (default `~/.claude`) |
 
 Model price multipliers come from the public pricing page, cached in `~/.claude/model-prices.json`.
+
+## Narrow terminals
+
+On every refresh the script reads the terminal width (`stty size </dev/tty`) and, if the line is too wide, drops one thing at a time until it fits. There is no resize notification, so the line adapts at the next refresh: after `refreshInterval` seconds, or sooner when Claude Code re-runs it for an event. A smaller interval (`/statusline:setup --interval 5`) reacts faster.
+
+| Level | Dropped, cumulatively | Example (default windows) |
+|---|---|---|
+| 0 | nothing | `Sonnet 5.5 (x1.0) \| ██░░░ 42% (200k) \| cache 24m 58s 90% \| 12% 4h 59m / 5h \| 55% 6d 23h / 7d` |
+| 1 | context window size, named extra windows, custom reset | `Sonnet 5.5 (x1.0) \| ██░░░ 42% \| cache 24m 58s 90% \| 12% 4h 59m / 5h \| 55% 6d 23h / 7d` |
+| 2 | cache hit rate | `… \| cache 24m 57s \| 12% 4h 59m / 5h \| …` |
+| 3 | `/ total` on windows | `… \| cache 24m 57s \| 12% 4h 59m \| 55% 6d 22h` |
+| 4 | price multiplier, windows after the first | `Sonnet 5.5 \| ██░░░ 42% \| cache 24m 56s \| 12% 4h 59m` |
+| 5 | cache | `Sonnet 5.5 \| ██░░░ 42% \| 12% 4h 59m` |
+| 6 | reset windows | `Sonnet 5.5 \| ██░░░ 42%` |
+
+If the width can't be read (no tty), nothing is dropped; set it by hand with `config.sh width 100`. If `/dev/tty` isn't available to the script it uses the tty of the nearest parent process that has one. To see what it detected, run `config.sh dump /tmp/sl.txt` (or set `STATUSLINE_DUMP`): each run writes the raw JSON there, then a line `cols=… margin=… level=… visible=…`; `config.sh dump off` stops it.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| The old status line is still there | `/statusline:setup --force` replaces an existing `statusLine` setting. Check that `jq` is installed. |
+| Reset windows (`12% 3h / 5h`) are missing | They exist on subscription accounts only, and only when listed in `resets`. A saved list such as `spend` hides the rest: run `/statusline-reset RESETS`. To see which windows your account gets: `! bash ~/.claude/statusline/config.sh dump /tmp/sl.txt`, then read the file. |
+| The multiplier says `(x2.0)` | It is relative to your base model, which defaults to Sonnet 5.5. Set it with `/statusline-model`. |
+| `no cache` | The prompt cache has expired or has not been written yet; it turns into a countdown after the next request. |
+| The line never gets shorter in a small window | The width could not be read. Set it by hand with `/statusline-width 100`, or use `dump` (see [Narrow terminals](#narrow-terminals)). |
+| `/statusline-*` commands are not found | Run `/reload-plugins`. They need a Claude Code version with plugin modules; `! bash ~/.claude/statusline/config.sh <command>` always works. |
+| A setting seems ignored | An env var `STATUSLINE_<KEY>` beats the saved value. `/statusline-show` lists each value and where it comes from. |
