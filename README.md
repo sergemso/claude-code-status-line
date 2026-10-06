@@ -3,7 +3,7 @@
 A Claude Code status line, packaged as a plugin. Sections are separated by `|`:
 
 ```
-proj | Sonnet 5.5 (x1.0) | [####------] 42% | cache 1h 25:00 | h/m/% 9/1/90% | 12% 2h0m/5h | 55% 2d7h/7d
+proj | Sonnet 5.5 (x1.0) | [####------] 42% (200k) | cache 1h 25:00 | h/m/% 9/1/90% | 12% 2h 5m / 5h | 55% 2d 22h / 7d
 ```
 
 dir · model (with price multiplier vs. Sonnet 5.5) · context bar · prompt-cache TTL and time left, hit/miss stats · rate-limit usage and reset time per window.

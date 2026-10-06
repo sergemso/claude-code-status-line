@@ -21,6 +21,11 @@ mult=$(jq -r --arg m "Claude $(echo "$input" | jq -r '.model.display_name')" --a
   | . * 10 | round / 10' "$PRICES" 2>/dev/null)
 [ -n "$mult" ] && model="$model (x$(printf '%.1f' "$mult"))"
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+# Context window size -> "200k" / "1M"
+csize=$(echo "$input" | jq -r '.context_window.context_window_size // empty')
+if [ -n "$csize" ]; then
+  if [ "$csize" -ge 1000000 ]; then csize="$(( csize / 1000000 ))M"; else csize="$(( csize / 1000 ))k"; fi
+fi
 
 # Colors (dim-friendly)
 RESET=$'\033[0m'
@@ -49,7 +54,7 @@ if [ -n "$used" ]; then
   bar_filled=$(printf '%*s' "$filled" '' | tr ' ' '#')
   bar_empty=$(printf '%*s' "$empty" '' | tr ' ' '-')
 
-  bar=$(printf "${DIM}[${color}%s${DIM}%s${DIM}]${RESET} ${color}%d%%${RESET}" "$bar_filled" "$bar_empty" "$pct")
+  bar=$(printf "${DIM}[${color}%s${DIM}%s${DIM}]${RESET} ${color}%d%%${RESET}${csize:+ ${DIM}(${csize})${RESET}}" "$bar_filled" "$bar_empty" "$pct")
 else
   bar="${DIM}(no context data)${RESET}"
 fi
@@ -90,14 +95,20 @@ fi
 # five_hour = session, seven_day = weekly, spend_limit = gateway (daily/weekly/monthly).
 now=$(date +%s)
 limits=()
-# Seconds -> compact duration: 2d3h42m, 3h42m, 42m
+# Seconds -> compact duration: "2d 7h", "1d", "5h", "2h 12m", "42m" (drops the unit below the leading one's usefulness)
 fmt_dur() {
-  local s=$1 d h m out=""
+  local s=$1 d h m
   [ "$s" -lt 0 ] && s=0
   d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
-  [ "$d" -gt 0 ] && out="${d}d"
-  { [ "$d" -gt 0 ] || [ "$h" -gt 0 ]; } && out="${out}${h}h"
-  printf '%s%dm' "$out" "$m"
+  if [ "$d" -gt 0 ]; then
+    [ "$h" -gt 0 ] && printf '%dd %dh' "$d" "$h" || printf '%dd' "$d"
+  elif [ "$h" -ge 3 ]; then
+    printf '%dh' "$h"
+  elif [ "$h" -gt 0 ]; then
+    [ "$m" -gt 0 ] && printf '%dh %dm' "$h" "$m" || printf '%dh' "$h"
+  else
+    printf '%dm' "$m"
+  fi
 }
 # Each row: percent, resets_at, total period label (monthly assumed 30d)
 while IFS=$'\t' read -r lpct lreset ltotal; do
@@ -106,7 +117,7 @@ while IFS=$'\t' read -r lpct lreset ltotal; do
   lcolor=$GREEN
   [ "$lpct" -ge 50 ] && lcolor=$YELLOW
   [ "$lpct" -ge 80 ] && lcolor=$RED
-  limits+=("${lcolor}${lpct}%${RESET} ${lleft}${DIM}/${ltotal}${RESET}")
+  limits+=("${lcolor}${lpct}%${RESET} ${lleft} ${DIM}/ ${ltotal}${RESET}")
 done < <(echo "$input" | jq -r '
   .rate_limits // {} | (
     (.five_hour   | select(.) | [.used_percentage, .resets_at, "5h"]),
