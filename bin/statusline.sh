@@ -68,7 +68,7 @@ if [ -n "$ttl" ]; then
   read -r sh sm sp < <(echo "$input" | jq -r '.prompt_cache | select(.requests != null) | "\(.requests - .misses) \(.misses) \((.hit_ratio * 100) | round)"')
   if [ -n "$sp" ]; then
     scolor=$GREEN; [ "$sp" -lt 80 ] && scolor=$RED
-    stats=" ${DIM}h/m/% ${RESET}${scolor}${sh}/${sm}/${sp}%${RESET}"
+    stats="${DIM}h/m/% ${RESET}${scolor}${sh}/${sm}/${sp}%${RESET}"
   else
     stats=""
   fi
@@ -127,7 +127,8 @@ fi
 
 # Join non-empty sections with a dim " | "
 sections=("$dir" "${CYAN}${model}${RESET}" "$bar")
-[ -n "$cache" ] && sections+=("${cache}${stats}")
+[ -n "$cache" ] && sections+=("$cache")
+[ -n "$stats" ] && sections+=("$stats")
 sections+=("${limits[@]}")
 sep="${DIM} | ${RESET}"
 out=""
