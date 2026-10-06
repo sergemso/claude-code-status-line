@@ -4,6 +4,10 @@ A [Claude Code](https://claude.com/claude-code) status line, packaged as a plugi
 
 ## What you see
 
+![Annotated status line, 120 columns wide](docs/statusline.svg)
+
+The same in plain text:
+
 ```text
         10        20        30        40        50        60        70        80        90       100       110       120
 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890

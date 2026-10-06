@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1048" height="482" viewBox="0 0 1048 482" role="img" aria-label="Annotated example of the status line, 120 columns wide" font-size="14">
+<!-- Hand-editable. The status line is one <text> (it flows by itself); everything under or over it is positioned in em units: column x 0.6em (monospace advance). Colors: green #3fb950, yellow #d29922, red #f85149. -->
+<rect width="1048" height="482" rx="10" fill="#0d1117" stroke="#30363d"/>
+<rect width="1048" height="34" rx="10" fill="#161b22"/><rect y="24" width="1048" height="10" fill="#161b22"/>
+<circle cx="22" cy="17" r="6" fill="#ff5f56"/>
+<circle cx="42" cy="17" r="6" fill="#ffbd2e"/>
+<circle cx="62" cy="17" r="6" fill="#27c93f"/>
+<text x="524" y="22" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#6e7681">claude — 120 columns</text>
+<g transform="translate(20,0)" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono','Liberation Mono',monospace">
+<!-- ruler: a tick every 10 columns -->
+<line x1="0" y1="66" x2="72em" y2="66" stroke="#6e7681"/>
+<line x1="0em" y1="61" x2="0em" y2="66" stroke="#6e7681"/><text x="0em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">0</tspan></text>
+<line x1="6em" y1="61" x2="6em" y2="66" stroke="#6e7681"/><text x="6em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">10</tspan></text>
+<line x1="12em" y1="61" x2="12em" y2="66" stroke="#6e7681"/><text x="12em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">20</tspan></text>
+<line x1="18em" y1="61" x2="18em" y2="66" stroke="#6e7681"/><text x="18em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">30</tspan></text>
+<line x1="24em" y1="61" x2="24em" y2="66" stroke="#6e7681"/><text x="24em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">40</tspan></text>
+<line x1="30em" y1="61" x2="30em" y2="66" stroke="#6e7681"/><text x="30em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">50</tspan></text>
+<line x1="36em" y1="61" x2="36em" y2="66" stroke="#6e7681"/><text x="36em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">60</tspan></text>
+<line x1="42em" y1="61" x2="42em" y2="66" stroke="#6e7681"/><text x="42em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">70</tspan></text>
+<line x1="48em" y1="61" x2="48em" y2="66" stroke="#6e7681"/><text x="48em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">80</tspan></text>
+<line x1="54em" y1="61" x2="54em" y2="66" stroke="#6e7681"/><text x="54em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">90</tspan></text>
+<line x1="60em" y1="61" x2="60em" y2="66" stroke="#6e7681"/><text x="60em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">100</tspan></text>
+<line x1="66em" y1="61" x2="66em" y2="66" stroke="#6e7681"/><text x="66em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">110</tspan></text>
+<line x1="72em" y1="61" x2="72em" y2="66" stroke="#6e7681"/><text x="72em" y="56" text-anchor="middle" fill="#6e7681"><tspan font-size="11">120</tspan></text>
+<text x="0" y="104" fill="#6e7681">&gt; your prompt…</text>
+<line x1="0" y1="122" x2="72em" y2="122" stroke="#30363d" stroke-width="1.5"/>
+<!-- the status line -->
+<text x="0" y="136" xml:space="preserve" fill="#c9d1d9"><tspan fill="#56d4dd">Sonnet 5.5 (x1.0)</tspan><tspan fill="#6e7681"> | </tspan><tspan fill="#3fb950">██</tspan><tspan fill="#6e7681">░░░</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#3fb950">42%</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#6e7681">(200k)</tspan><tspan fill="#6e7681"> | </tspan><tspan fill="#6e7681">cache</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#3fb950">24m 58s</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#3fb950">90%</tspan><tspan fill="#6e7681"> | </tspan><tspan fill="#3fb950">12%</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#c9d1d9">4h 59m</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#6e7681">/ 5h</tspan><tspan fill="#6e7681"> | </tspan><tspan fill="#d29922">55%</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#c9d1d9">6d 23h</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#6e7681">/ 7d</tspan><tspan fill="#6e7681"> | </tspan><tspan fill="#6e7681">opus</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#f85149">83%</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#c9d1d9">6d 23h</tspan><tspan fill="#c9d1d9"> </tspan><tspan fill="#6e7681">/ 7d</tspan></text>
+<!-- callouts: bracket under each section, stem, numbered dot (section = columns start..end) -->
+<g stroke="#6e7681"><line x1="0em" y1="146" x2="10.2em" y2="146"/><line x1="0em" y1="142" x2="0em" y2="146"/><line x1="10.2em" y1="142" x2="10.2em" y2="146"/><line x1="5.1em" y1="146" x2="5.1em" y2="168"/></g>
+<circle cx="5.1em" cy="178" r="10" fill="#1f6feb"/><text x="5.1em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">1</tspan></text>
+<g stroke="#6e7681"><line x1="12em" y1="146" x2="21.6em" y2="146"/><line x1="12em" y1="142" x2="12em" y2="146"/><line x1="21.6em" y1="142" x2="21.6em" y2="146"/><line x1="16.8em" y1="146" x2="16.8em" y2="168"/></g>
+<circle cx="16.8em" cy="178" r="10" fill="#1f6feb"/><text x="16.8em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">2</tspan></text>
+<g stroke="#6e7681"><line x1="23.4em" y1="146" x2="33.6em" y2="146"/><line x1="23.4em" y1="142" x2="23.4em" y2="146"/><line x1="33.6em" y1="142" x2="33.6em" y2="146"/><line x1="28.5em" y1="146" x2="28.5em" y2="168"/></g>
+<circle cx="28.5em" cy="178" r="10" fill="#1f6feb"/><text x="28.5em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">3</tspan></text>
+<g stroke="#6e7681"><line x1="35.4em" y1="146" x2="44.4em" y2="146"/><line x1="35.4em" y1="142" x2="35.4em" y2="146"/><line x1="44.4em" y1="142" x2="44.4em" y2="146"/><line x1="39.9em" y1="146" x2="39.9em" y2="168"/></g>
+<circle cx="39.9em" cy="178" r="10" fill="#1f6feb"/><text x="39.9em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">4</tspan></text>
+<g stroke="#6e7681"><line x1="46.2em" y1="146" x2="55.2em" y2="146"/><line x1="46.2em" y1="142" x2="46.2em" y2="146"/><line x1="55.2em" y1="142" x2="55.2em" y2="146"/><line x1="50.7em" y1="146" x2="50.7em" y2="168"/></g>
+<circle cx="50.7em" cy="178" r="10" fill="#1f6feb"/><text x="50.7em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">5</tspan></text>
+<g stroke="#6e7681"><line x1="57em" y1="146" x2="69em" y2="146"/><line x1="57em" y1="142" x2="57em" y2="146"/><line x1="69em" y1="142" x2="69em" y2="146"/><line x1="63em" y1="146" x2="63em" y2="168"/></g>
+<circle cx="63em" cy="178" r="10" fill="#1f6feb"/><text x="63em" y="182.5" text-anchor="middle" fill="#fff"><tspan font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700">6</tspan></text>
+</g>
+<!-- legend -->
+<circle cx="32" cy="216" r="10" fill="#1f6feb"/><text x="32" y="220.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">1</text>
+<text x="54" y="220" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">Model</text><text x="180" y="220" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Active model. (x1.0) = its input price relative to your base model (default Sonnet 5.5).</text>
+<circle cx="32" cy="246" r="10" fill="#1f6feb"/><text x="32" y="250.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">2</text>
+<text x="54" y="250" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">Context window</text><text x="180" y="250" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Fill bar (<tspan font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono','Liberation Mono',monospace">░▒▓█</tspan>, 15 steps), percent used, window size. Yellow from 50%, red from 80%.</text>
+<circle cx="32" cy="276" r="10" fill="#1f6feb"/><text x="32" y="280.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">3</text>
+<text x="54" y="280" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">Prompt cache</text><text x="180" y="280" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Time until the cache expires (yellow &lt; 20 min, red &lt; 5) and its hit rate (red &lt; 80%). &quot;no cache&quot; = expired.</text>
+<circle cx="32" cy="306" r="10" fill="#1f6feb"/><text x="32" y="310.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">4</text>
+<text x="54" y="310" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">5-hour window</text><text x="180" y="310" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Percent used, time left until reset / window length. Yellow from 50%, red from 80%.</text>
+<circle cx="32" cy="336" r="10" fill="#1f6feb"/><text x="32" y="340.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">5</text>
+<text x="54" y="340" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">7-day window</text><text x="180" y="340" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Same format for the weekly limit. A gateway spend limit shows the same way, e.g. &quot;81% 21d 23h / 30d&quot;.</text>
+<circle cx="32" cy="366" r="10" fill="#1f6feb"/><text x="32" y="370.5" text-anchor="middle" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#fff">6</text>
+<text x="54" y="370" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#c9d1d9">Extra windows</text><text x="180" y="370" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" fill="#c9d1d9" opacity="0.85">Optional (resets all): any other window the API sends, labelled with a dim name.</text>
+<line x1="20" y1="390" x2="1028" y2="390" stroke="#30363d"/>
+<rect x="20" y="399" width="12" height="12" rx="2" fill="#3fb950"/><text x="38" y="410" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#c9d1d9">ok</text>
+<rect x="80" y="399" width="12" height="12" rx="2" fill="#d29922"/><text x="98" y="410" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#c9d1d9">warn</text>
+<rect x="156" y="399" width="12" height="12" rx="2" fill="#f85149"/><text x="174" y="410" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#c9d1d9">critical</text>
+<text x="274" y="410" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#6e7681">Sections are separated by a dim “|”. Breakpoints, sections and windows are configurable: see Settings.</text>
+</svg>
