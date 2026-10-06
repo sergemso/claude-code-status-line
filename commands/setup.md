@@ -1,5 +1,6 @@
 ---
 description: Point Claude Code's statusLine setting at this plugin's status line (--force to replace an existing one, --interval N for refresh seconds)
+disable-model-invocation: true
 allowed-tools: Bash
 ---
 

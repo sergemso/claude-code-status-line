@@ -54,21 +54,36 @@ If the width can't be read (no tty), nothing is dropped; set it by hand with `co
 
 ## Settings
 
-Change them with `/statusline:config` (no arguments: a guided picker), or script it for free with `! bash ~/.claude/statusline/config.sh <command>`:
+Three ways to change them, all writing `~/.claude/statusline/config` (read on every refresh):
 
-| Command | Does |
+| | Command | Model turn? |
+|---|---|---|
+| Typed commands | `/statusline-show`, `-model`, `-sections`, `-resets`, `-thresholds`, `-width`, `-reset` | none: answered by the plugin itself |
+| Guided picker | `/statusline:config` | yes (questions go through the model) |
+| Shell | `! bash ~/.claude/statusline/config.sh <command>` | none |
+
+Examples:
+
+```
+/statusline-show
+/statusline-model Claude Opus 5.5        # or: /statusline-model list
+/statusline-sections hide stats          # show | hide | only NAME... | all
+/statusline-resets 5h,7d,spend           # or: all | none
+/statusline-thresholds context 60 85     # yellow/red at % used; also: resets, cache (minutes left: 30 10)
+/statusline-width 100                    # or: auto
+/statusline-reset                        # drop saved settings (or: /statusline-reset BASE_MODEL)
+```
+
+| Setting | Meaning |
 |---|---|
-| `show` | Current values and where each comes from (env, saved, default) |
-| `model [NAME\|list]` | Base model for the price multiplier, validated against the price table |
-| `sections [show\|hide\|only NAME... \| all]` | Enable or disable `model context cache stats resets` (`stats` = the hit rate inside `cache`) |
-| `resets LIST\|all\|none` | Which reset windows to show. Items are API keys (`seven_day_opus`) or aliases (`5h`, `7d`, `spend`, `7d-opus`); `all` = every window the API sends. Windows other than 5h/7d/spend carry a dim name, e.g. `opus 83% 6d 23h / 7d` |
-| `thresholds context\|resets WARN CRIT` | Yellow/red at WARN/CRIT percent used (defaults 50/80) |
-| `thresholds cache WARN CRIT` | Yellow/red when WARN/CRIT minutes are left (defaults 20/5) |
-| `width [N\|auto]` | Columns to fit the line into (see [Narrow terminals](#narrow-terminals)) |
-| `margin N` | Columns kept free at the right edge (default 2) |
-| `reset [KEY...]` | Drop saved settings |
+| model | Base model for the price multiplier, validated against the price table (names match case-insensitively, with or without `Claude `) |
+| sections | Enable or disable `model context cache stats resets` (`stats` = the hit rate inside `cache`) |
+| resets | Which reset windows to show. Items are API keys (`seven_day_opus`) or aliases (`5h`, `7d`, `spend`, `7d-opus`); `all` shows every window the API sends. Windows other than 5h/7d/spend carry a dim name, e.g. `opus 83% 6d 23h / 7d` |
+| thresholds | `context`/`resets`: yellow/red at WARN/CRIT percent used (defaults 50/80). `cache`: yellow/red when WARN/CRIT minutes are left (20/5) |
+| width, margin | Columns to fit the line into (see [Narrow terminals](#narrow-terminals)); columns kept free at the right edge (default 2) |
+| dump | `config.sh dump PATH` writes the raw status-line JSON and width diagnostics there each run; `dump off` stops it |
 
-They are saved in `~/.claude/statusline/config` and read on every refresh. The refresh interval itself is `refreshInterval` in `settings.json`: `/statusline:setup --interval SECONDS`.
+The refresh interval itself is `refreshInterval` in `settings.json`: `/statusline:setup --interval SECONDS`. Module commands can't contain a colon, which is why the typed commands are `/statusline-…` while the markdown ones are `/statusline:…`.
 
 ### Environment overrides
 

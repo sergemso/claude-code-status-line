@@ -1,5 +1,6 @@
 ---
 description: Change status line settings: base model, sections, reset windows, color breakpoints (no args = guided)
+disable-model-invocation: true
 allowed-tools: Bash, AskUserQuestion
 ---
 
