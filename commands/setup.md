@@ -1,5 +1,5 @@
 ---
-description: Point Claude Code's statusLine setting at this plugin's status line
+description: Point Claude Code's statusLine setting at this plugin's status line (--force to replace an existing one, --interval N for refresh seconds)
 allowed-tools: Bash
 ---
 
