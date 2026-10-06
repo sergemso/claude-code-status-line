@@ -1,0 +1,12 @@
+{
+  "name": "claude-code-status-line",
+  "owner": { "name": "sergemso" },
+  "description": "Claude Code status line: model, context bar, prompt-cache timer, rate-limit resets",
+  "plugins": [
+    {
+      "name": "statusline",
+      "description": "Status line: dir | model (price multiplier) | context bar | cache TTL | rate-limit resets",
+      "source": "./"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "statusline",
+  "version": "0.1.0",
+  "description": "Status line: dir | model (price multiplier) | context bar | cache TTL | rate-limit resets",
+  "author": { "name": "sergemso" },
+  "repository": "https://github.com/sergemso/claude-code-status-line",
+  "license": "MIT"
+}
