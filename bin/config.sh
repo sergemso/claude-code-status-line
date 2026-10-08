@@ -5,7 +5,7 @@
 CFG=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
 CONF=$CFG/statusline/config
 PRICES=$CFG/model-prices.json
-ALL_SECTIONS=(model context cache stats resets)   # display order
+ALL_SECTIONS=(model context cache stats resets limits)   # display order
 
 usage() {
   cat <<'EOF'
@@ -16,7 +16,7 @@ Usage: config.sh <command>
   sections show|hide NAME...    enable/disable sections
   sections only NAME...         enable just these
   sections all                  enable all
-      NAME: model context cache stats resets   (stats = cache hit rate, shown inside cache)
+      NAME: model context cache stats resets limits   (stats = cache hit rate, shown inside cache; limits = plan-specific rate limit windows)
   resets LIST|all|none          which reset windows to show, e.g. 5h,7d,spend
   thresholds context|resets WARN CRIT   yellow/red at WARN/CRIT percent used (0-100)
   thresholds cache WARN CRIT            yellow/red when WARN/CRIT minutes are left
@@ -81,7 +81,7 @@ save_sections() {
 cmd_show() {
   local k def v src
   printf '%-14s %-38s %s\n' setting value source
-  for pair in "BASE_MODEL:Claude Sonnet 5.5" "SECTIONS:model,context,cache,stats,resets" "RESETS:5h,7d,spend" \
+  for pair in "BASE_MODEL:Claude Sonnet 5.5" "SECTIONS:model,context,cache,stats,resets,limits" "RESETS:5h,7d,spend" \
               "CONTEXT_WARN:50" "CONTEXT_CRIT:80" "CACHE_WARN:20" "CACHE_CRIT:5" "RESET_WARN:50" "RESET_CRIT:80" "WIDTH:0(auto)" "MARGIN:2"; do
     k=${pair%%:*}; def=${pair#*:}
     local e="STATUSLINE_$k"
@@ -117,7 +117,7 @@ sections_status() {
   for s in "${ALL_SECTIONS[@]}"; do case " ${cur[*]} " in *" $s "*) ;; *) hidden="$hidden $s" ;; esac; done
   echo "enabled: ${cur[*]}"
   echo "hidden: ${hidden:- (none)}"
-  echo "names:   ${ALL_SECTIONS[*]}   (stats = cache hit rate, shown inside cache)"
+  echo "names:   ${ALL_SECTIONS[*]}   (stats = cache hit rate, shown inside cache; limits = plan-specific rate limit windows)"
   echo "change:  sections show|hide|only NAME...   or   sections all"
 }
 
