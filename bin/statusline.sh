@@ -38,7 +38,7 @@ setting() { local e="STATUSLINE_$1" f="cf_$1"; echo "${!e:-${!f:-$2}}"; }
 # num KEY DEFAULT -> setting, or DEFAULT if not a non-negative integer
 num() { local v; v=$(setting "$1" "$2"); case $v in ''|*[!0-9]*) v=$2 ;; esac; echo "$v"; }
 BASE_MODEL=$(setting BASE_MODEL "Claude Sonnet 5.5")
-SECTIONS=$(setting SECTIONS "model,context,cache,stats,resets")
+SECTIONS=$(setting SECTIONS "model,context,cache,stats,resets,limits")
 PRICES_TTL=$(num PRICES_TTL 3600)
 CONTEXT_WARN=$(num CONTEXT_WARN 50); CONTEXT_CRIT=$(num CONTEXT_CRIT 80)   # context used, %
 CACHE_WARN=$(num CACHE_WARN 20);     CACHE_CRIT=$(num CACHE_CRIT 5)        # cache time left, minutes
@@ -53,6 +53,28 @@ input=$(cat)
 DUMP=$(setting DUMP "")
 [ -n "$DUMP" ] && printf '%s\n' "$input" > "$DUMP"
 
+# Rate limits cache: persist last-known windows across sessions (new sessions don't get them)
+# Atomic write with timestamp comparison - only update if newer data
+RL_CACHE=$CFG/statusline/ratelimits.json
+if echo "$input" | jq -e '.rate_limits | length > 0' >/dev/null 2>&1; then
+  # Extract rate_limits with resets_at timestamps for comparison
+  new_rl=$(echo "$input" | jq '.rate_limits')
+  # Get latest resets_at from new data
+  new_latest=$(echo "$new_rl" | jq -r 'map(.resets_at // 0) | max')
+  # Get latest resets_at from existing cache
+  old_latest=0
+  if [ -r "$RL_CACHE" ]; then
+    old_latest=$(cat "$RL_CACHE" | jq -r 'map(.resets_at // 0) | max' 2>/dev/null || echo 0)
+  fi
+  # Only write if new data is newer (or no old data). new_latest must be >0 (valid timestamp).
+  if [ "$new_latest" -gt 0 ] && [ "$new_latest" -gt "$old_latest" ]; then
+    tmp=$(mktemp "$RL_CACHE.XXXXXX") && echo "$new_rl" > "$tmp" && mv -f "$tmp" "$RL_CACHE"
+  fi
+elif [ -r "$RL_CACHE" ]; then
+  merged=$(echo "$input" | jq --argjson rl "$(cat "$RL_CACHE")" '.rate_limits = $rl' 2>/dev/null) || merged=$input
+  input=$merged
+fi
+
 model=$(echo "$input" | jq -r '.model.display_name')
 model_plain=$model
 # Price multiplier vs base model, from prices cached by refresh-model-prices.sh
@@ -62,11 +84,16 @@ if [ ! -e "$PRICES" ] || [ $(( $(date +%s) - $(mtime "$PRICES") )) -ge "$PRICES_
   STATUSLINE_PRICES_TTL=$PRICES_TTL nohup "$HERE/refresh-model-prices.sh" >/dev/null 2>&1 </dev/null &
 fi
 fast=$(echo "$input" | jq -r '.fast_mode // false')
-mult=$(jq -r --arg m "Claude $(echo "$input" | jq -r '.model.display_name')" --arg b "$BASE_MODEL" --argjson fast "$fast" '
-  .models as $p | ($p[$b].in // empty) as $base | $p[$m] // empty
-  | (if $fast and .fast_in then .fast_in else .in end) / $base
-  | . * 10 | round / 10' "$PRICES" 2>/dev/null)
-[ -n "$mult" ] && model="$model (x$(printf '%.1f' "$mult"))"
+model_name=$(echo "$input" | jq -r '.model.display_name')
+# Match price table keys: try exact, with "Claude " prefix, case-insensitive
+mult=$(jq -r --arg m "$model_name" --arg b "$BASE_MODEL" --argjson fast "$fast" '
+  .models as $p | ($p[$b].in // empty) as $base
+  | if $base == "" or $base == 0 then empty
+    else ($p[$m] // $p["Claude " + $m] // $p[($m | ascii_downcase)] // $p["claude " + ($m | ascii_downcase)] // empty)
+         | (if $fast and .fast_in then .fast_in else .in end) / $base
+         | . * 10 | round / 10
+    end' "$PRICES" 2>/dev/null)
+[ -n "$mult" ] && model="$model_name (x$(printf '%.1f' "$mult"))"
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 # Context window size -> "200k" / "1M"
 csize=$(echo "$input" | jq -r '.context_window.context_window_size // empty')
@@ -82,14 +109,52 @@ GREEN=$'\033[32m'
 YELLOW=$'\033[33m'
 RED=$'\033[31m'
 
-bar=""; bar_s=""
+# Model effort level indicator (3-char: border + fill + border)
+# Based on price multiplier vs base model: 1x=xs, 2x=sm, 3x=m, 4x=l, 5x=xl, 6x=xxl, 7x=h, 8x+=max
+effort_fill() {
+  local mult=$1
+  awk -v m="$mult" 'BEGIN {
+    if (m == "" || m < 1.5) print "▁"
+    else if (m < 2.5) print "▂"
+    else if (m < 3.5) print "▃"
+    else if (m < 4.5) print "▄"
+    else if (m < 5.5) print "▅"
+    else if (m < 6.5) print "▆"
+    else if (m < 7.5) print "▇"
+    else print "█"
+  }'
+}
+effort=""
+if [ -n "$mult" ]; then
+  fill=$(effort_fill "$mult")
+  # Color by multiplier: green (<=2x), yellow (2-5x), red (>5x)
+  # Convert mult to integer (x10) for bash arithmetic: 1.0->10, 2.0->20, 5.0->50
+  mult10=$(printf '%.0f' "$(echo "$mult * 10" | bc -l 2>/dev/null || awk -v m="$mult" 'BEGIN { printf "%.0f", m * 10 }')")
+  if [ "$mult10" -le 20 ]; then
+    effort_color=$GREEN
+  elif [ "$mult10" -le 50 ]; then
+    effort_color=$YELLOW
+  else
+    effort_color=$RED
+  fi
+  # 3-char: left border (▕) + fill + right border (▏)
+  effort="${effort_color}▕${fill}▏${RESET}"
+fi
+
+# Context usage: 3-char indicator (border + fill + border)
+ctx_fill=""
+ctx_pct=""
 if [ -n "$used" ]; then
   pct=$(printf '%.0f' "$used")
-  # 5 cells x 4 shades (░ ▒ ▓ █) = 15 steps, Norton-Commander style
-  width=5
-  steps=$(( (pct * width * 3 + 50) / 100 ))
-  [ "$steps" -gt $(( width * 3 )) ] && steps=$(( width * 3 ))
-  full=$(( steps / 3 )); part=$(( steps % 3 ))
+  # 8 levels using lower blocks: ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ (evenly spaced 12.5% increments)
+  if   [ "$pct" -lt 12 ]; then ctx_fill="▁"
+  elif [ "$pct" -lt 25 ]; then ctx_fill="▂"
+  elif [ "$pct" -lt 37 ]; then ctx_fill="▃"
+  elif [ "$pct" -lt 50 ]; then ctx_fill="▄"
+  elif [ "$pct" -lt 62 ]; then ctx_fill="▅"
+  elif [ "$pct" -lt 75 ]; then ctx_fill="▆"
+  elif [ "$pct" -lt 87 ]; then ctx_fill="▇"
+  else ctx_fill="█"; fi
 
   if [ "$pct" -ge "$CONTEXT_CRIT" ]; then
     color=$RED
@@ -98,17 +163,11 @@ if [ -n "$used" ]; then
   else
     color=$GREEN
   fi
-
-  cells=""
-  for (( i = 0; i < width; i++ )); do
-    if   [ "$i" -lt "$full" ]; then cells+="█"
-    elif [ "$i" -eq "$full" ] && [ "$part" -gt 0 ]; then cells+=$([ "$part" -eq 1 ] && echo "▒" || echo "▓")
-    else cells+="${DIM}░${RESET}${color}"
-    fi
-  done
-
-  bar_s="${color}${cells}${RESET} ${color}${pct}%${RESET}"                # no window size
-  bar="${bar_s}${csize:+ ${DIM}(${csize})${RESET}}"
+  # 3-char: left border (▕) + fill + right border (▏)
+  ctx_char="${color}▕${ctx_fill}▏${RESET}"
+  ctx_pct="${color}${pct}%${RESET}"
+  bar="${ctx_char} ${ctx_pct}${csize:+ ${DIM}(${csize})${RESET}}"
+  bar_s="${ctx_char} ${ctx_pct}"
 else
   bar="${DIM}(no context data)${RESET}"; bar_s=$bar
 fi
@@ -200,6 +259,28 @@ build_limits() {   # $1 = show named extra windows, $2 = show "/ total"
 done
 }
 
+# Plan-specific rate limit windows (enterprise, gateway, etc.)
+# Categorizes windows: standard (5h), subscription (7d), gateway (spend), enterprise (per-model)
+build_plan_limits() {
+  plan_limits=()
+  local row rk ralias rname rpct rres rtot plan plan_color plan_label
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r rk ralias rname rpct rres rtot <<< "$row"
+    # Determine plan type from window key
+    case "$rk" in
+      five_hour)        plan="std";   plan_color=$CYAN;  plan_label="STD" ;;
+      seven_day)        plan="sub";   plan_color=$GREEN; plan_label="SUB" ;;
+      spend_limit)      plan="gw";    plan_color=$YELLOW; plan_label="GW" ;;
+      seven_day_*|*_hour_*|*_week_*|*_month_*) plan="ent"; plan_color=$RED; plan_label="ENT" ;;
+      *)                plan="oth";   plan_color=$DIM;   plan_label="?" ;;
+    esac
+    [ "$rpct" = "-" ] && rpct="?"
+    pct_color=$GREEN
+    [ "$rpct" != "?" ] && { [ "$rpct" -ge "$RESET_WARN" ] && pct_color=$YELLOW; [ "$rpct" -ge "$RESET_CRIT" ] && pct_color=$RED; }
+    plan_limits+=("${plan_color}${plan_label}${RESET} ${pct_color}${rpct}%${RESET} $(fmt_dur $(( rres - now )))${rtot:+ ${DIM}/${rtot}${RESET}}")
+  done
+}
+
 # Optional custom reset (time only, no percentage): export
 # STATUSLINE_CUSTOM_RESET="label|YYYY-MM-DD HH:MM" (GNU date also accepts any date -d string)
 custom=""
@@ -232,7 +313,7 @@ case $cols in ''|*[!0-9]*) cols=0 ;; esac
 sep="${DIM} | ${RESET}"
 # render LEVEL -> sets $line. Higher level = more compact, each step drops one thing:
 #   1 context size, named extra windows, custom reset | 2 cache hit rate | 3 "/ total" on windows
-#   4 price multiplier, all windows but the first | 5 cache | 6 reset windows
+#   4 price multiplier, all windows but the first | 5 cache | 6 reset windows | 7 plan limits
 render() {
   local lvl=$1 parts=() p m=$model b=$bar c=$cache ext=1 tot=1 only1=0
   [ "$lvl" -ge 1 ] && { b=$bar_s; ext=0; }
@@ -241,24 +322,27 @@ render() {
   [ "$lvl" -ge 4 ] && { m=$model_plain; only1=1; }
   [ "$lvl" -ge 5 ] && c=""
   build_limits "$ext" "$tot"
+  sec limits && build_plan_limits
   [ "$lvl" -ge 6 ] && limits=()
-  [ "$only1" = 1 ] && limits=("${limits[@]:0:1}")
+  [ "$lvl" -ge 7 ] && plan_limits=()
+  [ "$only1" = 1 ] && { limits=("${limits[@]:0:1}"); plan_limits=("${plan_limits[@]:0:1}"); }
   [ "$lvl" -eq 0 ] && [ -n "$custom" ] && limits+=("$custom")
-  sec model   && parts+=("${CYAN}${m}${RESET}")
+  sec model   && parts+=("${CYAN}${m}${RESET}${effort:+ $effort}")
   sec context && parts+=("$b")
   sec cache   && parts+=("$c")
   sec resets  && parts+=("${limits[@]}")
+  sec limits  && parts+=("${plan_limits[@]}")
   line=""
   for p in "${parts[@]}"; do [ -z "$p" ] && continue; line="${line:+$line$sep}$p"; done
 }
 # visible width: strip color codes, count each block char as one column (locale-proof)
 shopt -s extglob
-visible() { local t=${1//$'\033'\[+([0-9;])m/}; t=${t//█/x}; t=${t//▓/x}; t=${t//▒/x}; t=${t//░/x}; echo "${#t}"; }
+visible() { local t=${1//$'\033'\[+([0-9;])m/}; t=${t//█/x}; t=${t//▓/x}; t=${t//▒/x}; t=${t//░/x}; t=${t//▇/x}; t=${t//▆/x}; t=${t//▅/x}; t=${t//▄/x}; t=${t//▃/x}; t=${t//▂/x}; t=${t//▁/x}; t=${t//▉/x}; t=${t//▊/x}; t=${t//▋/x}; t=${t//▌/x}; t=${t//▍/x}; t=${t//▎/x}; t=${t//▏/x}; t=${t//▕/x}; echo "${#t}"; }
 
 level=0
 render 0
 if [ "$cols" -gt 0 ]; then
-  while [ "$(visible "$line")" -gt $(( cols - MARGIN )) ] && [ "$level" -lt 6 ]; do
+  while [ "$(visible "$line")" -gt $(( cols - MARGIN )) ] && [ "$level" -lt 7 ]; do
     level=$(( level + 1 )); render "$level"
   done
 fi
